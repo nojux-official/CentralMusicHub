@@ -1,0 +1,24 @@
+{
+  "name": "centralmusichub",
+  "version": "1.0.0",
+  "description": "A software project for syncing playlist between two platforms (youtube and spotify).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nojux-official/CentralMusicHub.git"
+  },
+  "keywords": [
+    "youtube",
+    "spotify",
+    "sync"
+  ],
+  "author": "Jira2^2",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nojux-official/CentralMusicHub/issues"
+  },
+  "homepage": "https://github.com/nojux-official/CentralMusicHub#readme"
+}
