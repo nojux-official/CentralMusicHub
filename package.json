@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/nojux-official/CentralMusicHub/issues"
   },
-  "homepage": "https://github.com/nojux-official/CentralMusicHub#readme"
+  "homepage": "https://github.com/nojux-official/CentralMusicHub#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
