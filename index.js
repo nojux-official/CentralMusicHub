@@ -6,10 +6,6 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
-
 app.get("/api", (req, res) => {
   const status = {
      "status": "success"
