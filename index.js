@@ -1,5 +1,6 @@
 const express = require('express')
 const session = require('express-session');
+const sqlite = require("better-sqlite3");
 const crypto = require('crypto');
 
 require('dotenv').config()
@@ -57,10 +58,23 @@ const getToken = async (codeVerifier, code) => {
 
 
 
+const SqliteStore = require("better-sqlite3-session-store")(session)
+const db = new sqlite("sessions.db", { verbose: console.log });
+
 app.use(
   session({
-    secret: generateCodeVerifier(16),
+    secret: session_secret,
     saveUninitialized: false,
+    resave: false,
+
+    store: new SqliteStore({
+      client: db, 
+      expired: {
+        clear: true,
+        intervalMs: 900000 //ms = 15min
+      }
+    }),
+    
   })
 );
 app.use(express.urlencoded({ extended: true }));
