@@ -59,8 +59,8 @@ const getToken = async (codeVerifier, code) => {
 
 app.use(
   session({
-    secret: session_secret,
-    saveUninitialized: true, // ! Sitas galimai turi but false
+    secret: generateCodeVerifier(16),
+    saveUninitialized: false,
   })
 );
 app.use(express.urlencoded({ extended: true }));
