@@ -99,9 +99,9 @@ app.get("/api/spotify/callback", async (req, res) => {
   var code = req.query.code;
   var verifier = req.session.user.verifier;
 
-  const accessToken = await getToken(code);
+  const accessToken = await getToken(verifier, code);
 
-  req.session.user.access_token = accessToken;
+  req.session.user = {access_token: accessToken};
 
   const status = {
     "status": "success",
