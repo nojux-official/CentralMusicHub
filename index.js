@@ -1,5 +1,7 @@
 const express = require('express')
-const querystring = require('querystring');
+const session = require('express-session');
+const crypto = require('crypto');
+
 require('dotenv').config()
 
 const app = express()
@@ -8,51 +10,105 @@ const port = 80
 const server_address = process.env.server_address
 const client_id = process.env.spotify_client_id
 const client_secret = process.env.spotify_client_secret
+const session_secret = process.env.session_secret
 
-function generateRandomString(length) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let randomString = '';
+function generateCodeVerifier(length) {
+  let text = '';
+  let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
   for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    randomString += charset.charAt(randomIndex);
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
+async function generateCodeChallenge(codeVerifier) {
+  const data = new TextEncoder().encode(codeVerifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+
+const getToken = async (codeVerifier, code) => {
+  const payload = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: client_id,
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: `${server_address}/api/spotify/callback`,
+      code_verifier: codeVerifier,
+    }),
   }
 
-  return randomString;
+  const body = await fetch("https://accounts.spotify.com/api/token", payload);
+  const response = await body.json();
+
+  //TODO: get refresh token?
+
+  return response.access_token
 }
+
+
+
+app.use(
+  session({
+    secret: session_secret,
+    saveUninitialized: true, // ! Sitas galimai turi but false
+  })
+);
+app.use(express.urlencoded({ extended: true }));
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
 app.get("/api", (req, res) => {
   const status = {
-     "status": "success"
+    "status": "success"
   };
-  
+
   res.send(status);
 });
 
-app.get("/api/spotify/auth", (req, res) => {
-  var state = generateRandomString(16);
-  var scope = 'user-read-private user-read-email';
-  var redirect_uri = server_address + '/api/spotify/callback'
+app.get("/api/spotify/auth", async (req, res) => {
+  const verifier = generateCodeVerifier(128);
+  const challenge = await generateCodeChallenge(verifier);
 
-  res.redirect('https://accounts.spotify.com/authorize?' +
-    querystring.stringify({
-      response_type: 'code',
-      client_id: client_id,
-      scope: scope,
-      redirect_uri: redirect_uri,
-      state: state
-    }));
+  req.session.user = {verifier: verifier}
+
+  const params = new URLSearchParams();
+
+  params.append("response_type", "code");
+  params.append("client_id", client_id);
+  params.append("scope", "user-read-private user-read-email");
+  params.append("code_challenge", challenge);
+  params.append("code_challenge_method", "S256");
+  params.append("redirect_uri", `${server_address}/api/spotify/callback`);
+
+  res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
 });
 
-app.get("/api/spotify/callback", (req, res) => {
+app.get("/api/spotify/callback", async (req, res) => {
+  var code = req.query.code;
+  var verifier = req.session.user.verifier;
+
+  const accessToken = await getToken(code);
+
+  req.session.user.access_token = accessToken;
+
   const status = {
-    "status": "success"
- };
- 
- res.send(status);
+    "status": "success",
+    "access_token": accessToken
+  };
+
+  res.send(status);
 });
 
 
