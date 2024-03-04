@@ -2,6 +2,7 @@ const express = require('express')
 const session = require('express-session');
 const sqlite = require("better-sqlite3");
 const crypto = require('crypto');
+const axios = require('axios');
 
 require('dotenv').config()
 
@@ -25,52 +26,81 @@ function generateCodeVerifier(length) {
 
 async function generateCodeChallenge(codeVerifier) {
   const data = new TextEncoder().encode(codeVerifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+  const digest = await crypto.createHash('sha256').update(data).digest();
+  const base64Digest = digest.toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+
+  return base64Digest;
 }
 
 
 const getToken = async (codeVerifier, code) => {
-  const payload = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      client_id: client_id,
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: `${server_address}/api/spotify/callback`,
-      code_verifier: codeVerifier,
-    }),
+  const payload = new URLSearchParams({
+    client_id: client_id,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: `${server_address}/api/spotify/callback`,
+    code_verifier: codeVerifier,
+  });
+
+  try {
+    const response = await axios.post("https://accounts.spotify.com/api/token", payload, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    // TODO: Check for errors in the response
+
+    // TODO: Get refresh token if needed
+
+    return response.data.access_token;
+  } catch (error) {
+    console.error('Axios Error:', error);
+    throw error; // You might want to handle the error appropriately in your application
   }
+};
 
-  const body = await fetch("https://accounts.spotify.com/api/token", payload);
-  const response = await body.json();
-
-  //TODO: get refresh token?
-
-  return response.access_token
-}
 
 
 async function fetchProfile(token) {
-  const result = await fetch("https://api.spotify.com/v1/me", {
-      method: "GET", headers: { Authorization: `Bearer ${token}` }
-  });
+  try {
+    const response = await axios.get("https://api.spotify.com/v1/me", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  return await result.json();
+    // Check for errors in the response
+    if (response.data.error) {
+      throw new Error(`Spotify API error: ${response.data.error.message}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Axios Error:', error);
+    throw error; // Handle the error appropriately in your application
+  }
 }
+
 async function fetchPlaylists(user_id, token) {
-  const result = await fetch(`https://api.spotify.com/v1/users/${user_id}/playlists`, {
-      method: "GET", headers: { Authorization: `Bearer ${token}` }
-  });
+  try {
+    const response = await axios.get(`https://api.spotify.com/v1/users/${user_id}/playlists`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  return await result.json();
+    // Check for errors in the response
+    if (response.data.error) {
+      throw new Error(`Spotify API error: ${response.data.error.message}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Axios Error:', error);
+    throw error; // Handle the error appropriately in your application
+  }
 }
+
 
 
 

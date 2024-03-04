@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/nojux-official/CentralMusicHub#readme",
   "dependencies": {
+    "axios": "^1.6.7",
     "better-sqlite3": "^9.4.3",
     "better-sqlite3-session-store": "^0.1.0",
     "dotenv": "^16.4.5",
