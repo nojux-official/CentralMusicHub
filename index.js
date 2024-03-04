@@ -57,6 +57,22 @@ const getToken = async (codeVerifier, code) => {
 }
 
 
+async function fetchProfile(token) {
+  const result = await fetch("https://api.spotify.com/v1/me", {
+      method: "GET", headers: { Authorization: `Bearer ${token}` }
+  });
+
+  return await result.json();
+}
+async function fetchPlaylists(user_id, token) {
+  const result = await fetch(`https://api.spotify.com/v1/users/${user_id}/playlists`, {
+      method: "GET", headers: { Authorization: `Bearer ${token}` }
+  });
+
+  return await result.json();
+}
+
+
 
 const SqliteStore = require("better-sqlite3-session-store")(session)
 const db = new sqlite("sessions.db", { verbose: console.log });
@@ -120,6 +136,22 @@ app.get("/api/spotify/callback", async (req, res) => {
   const status = {
     "status": "success",
     "access_token": accessToken
+  };
+
+  res.send(status);
+});
+
+app.get("/api/spotify/list", async (req, res) => {
+  var accessToken = req.session.user.access_token;
+
+  var profile = await fetchProfile(accessToken);
+  var user_id = profile.id;
+
+  var playlists = await fetchPlaylists(user_id, accessToken);
+
+  const status = {
+    "status": "success",
+    "playlists": playlists
   };
 
   res.send(status);
