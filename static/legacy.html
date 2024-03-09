@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Authentication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+
+        #authButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Spotify Authentication</h1>
+
+    <button id="authButton" onclick="openSpotifyAuthPopup()">Authenticate with Spotify</button>
+
+    <script>
+        function openSpotifyAuthPopup() {
+            // Replace 'your_domain' with the actual domain of your website
+            var popupUrl = 'http://127.0.0.1/api/spotify/auth';
+
+            // Adjust the window features as needed
+            var popupFeatures = 'width=600,height=400,resizable=yes,scrollbars=yes';
+
+            // Open the popup window
+            window.open(popupUrl, 'SpotifyAuthPopup', popupFeatures);
+        }
+    </script>
+
+</body>
+</html>
