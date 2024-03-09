@@ -50,10 +50,10 @@
     <table id="playlistTable">
         <thead>
             <tr>
+                <th></th>
+                <th>Image</th>
                 <th>ID</th>
                 <th>Name</th>
-                <th>Href</th>
-                <th>Image</th>
             </tr>
         </thead>
         <tbody id="playlistBody">
@@ -87,14 +87,16 @@
 
             playlists.forEach(playlist => {
                 var row = tableBody.insertRow();
-                var idCell = row.insertCell(0);
-                var nameCell = row.insertCell(1);
-                var hrefCell = row.insertCell(2);
-                var imageCell = row.insertCell(3);
+                var checkboxCell = row.insertCell(0);
+                var imageCell = row.insertCell(1);
+                var idCell = row.insertCell(2);
+                var nameCell = row.insertCell(3);
 
-                idCell.textContent = playlist.id;
+                // Checkbox column (currently does nothing)
+                checkboxCell.innerHTML = '<input type="checkbox" disabled>';
+
+                idCell.innerHTML = '<a href="' + playlist.external_urls.spotify + '" target="_blank">' + playlist.id + '</a>';
                 nameCell.textContent = playlist.name;
-                hrefCell.textContent = playlist.href;
 
                 // Check if images are available
                 if (playlist.images && playlist.images.length > 0) {
