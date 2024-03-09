@@ -38,6 +38,29 @@
             max-width: 50px;
             max-height: 50px;
         }
+
+        /* Styles for the modal */
+        #myModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        #modalContent {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
     </style>
 </head>
 <body>
@@ -60,6 +83,14 @@
             <!-- Playlist data will be appended here -->
         </tbody>
     </table>
+
+    <!-- Modal Popup -->
+    <div id="myModal">
+        <div id="modalContent">
+            <span id="modalClose" onclick="closeModal()">&times;</span>
+            <p id="modalHref"></p>
+        </div>
+    </div>
 
     <script>
         function openSpotifyAuthPopup() {
@@ -92,6 +123,8 @@
                 var idCell = row.insertCell(2);
                 var nameCell = row.insertCell(3);
 
+                row.setAttribute('onclick', `openModal('${playlist.external_urls.spotify}')`);
+
                 // Checkbox column (currently does nothing)
                 checkboxCell.innerHTML = '<input type="checkbox" disabled>';
 
@@ -109,6 +142,23 @@
                     imageCell.textContent = 'No Image';
                 }
             });
+        }
+
+        // Modal functions
+        function openModal(href) {
+            document.getElementById('modalHref').textContent = 'Href URL: ' + href;
+            document.getElementById('myModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('myModal').style.display = 'none';
+        }
+
+        // Close modal if the user clicks outside of it
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('myModal')) {
+                closeModal();
+            }
         }
     </script>
 
