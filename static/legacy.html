@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Authentication</title>
+    <title>Spotify Integration</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,18 +11,55 @@
             margin: 50px;
         }
 
-        #authButton {
+        #authButton, #getListButton {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            margin: 10px;
+        }
+
+        #playlistTable {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        #playlistTable th, #playlistTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #playlistTable th {
+            background-color: #f2f2f2;
+        }
+
+        .playlistImage {
+            max-width: 50px;
+            max-height: 50px;
         }
     </style>
 </head>
 <body>
 
-    <h1>Spotify Authentication</h1>
+    <h1>Spotify Integration</h1>
 
     <button id="authButton" onclick="openSpotifyAuthPopup()">Authenticate with Spotify</button>
+    <button id="getListButton" onclick="getSpotifyPlaylist()">Get Playlist Data</button>
+
+    <table id="playlistTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Href</th>
+                <th>Image</th>
+            </tr>
+        </thead>
+        <tbody id="playlistBody">
+            <!-- Playlist data will be appended here -->
+        </tbody>
+    </table>
 
     <script>
         function openSpotifyAuthPopup() {
@@ -34,6 +71,42 @@
 
             // Open the popup window
             window.open(popupUrl, 'SpotifyAuthPopup', popupFeatures);
+        }
+
+        function getSpotifyPlaylist() {
+            // Make an API call to get playlist data
+            fetch('/api/spotify/list')
+                .then(response => response.json())
+                .then(data => renderPlaylistTable(data.playlists.items))
+                .catch(error => console.error('Error fetching playlist data:', error));
+        }
+
+        function renderPlaylistTable(playlists) {
+            var tableBody = document.getElementById('playlistBody');
+            tableBody.innerHTML = ''; // Clear existing table data
+
+            playlists.forEach(playlist => {
+                var row = tableBody.insertRow();
+                var idCell = row.insertCell(0);
+                var nameCell = row.insertCell(1);
+                var hrefCell = row.insertCell(2);
+                var imageCell = row.insertCell(3);
+
+                idCell.textContent = playlist.id;
+                nameCell.textContent = playlist.name;
+                hrefCell.textContent = playlist.href;
+
+                // Check if images are available
+                if (playlist.images && playlist.images.length > 0) {
+                    var playlistImage = document.createElement('img');
+                    playlistImage.src = playlist.images[0].url;
+                    playlistImage.alt = playlist.name + ' Image';
+                    playlistImage.classList.add('playlistImage');
+                    imageCell.appendChild(playlistImage);
+                } else {
+                    imageCell.textContent = 'No Image';
+                }
+            });
         }
     </script>
 
