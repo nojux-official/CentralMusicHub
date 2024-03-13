@@ -3,6 +3,7 @@ const session = require('express-session');
 const sqlite = require("better-sqlite3");
 const crypto = require('crypto');
 const axios = require('axios');
+const path = require('path');
 
 require('dotenv').config()
 
@@ -124,6 +125,8 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/static/', express.static(path.join(__dirname, 'static')));
 
 app.get('/', (req, res) => {
   res.send('Hello World!')

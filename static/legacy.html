@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Integration</title>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 50px;
+    }
+
+    #authButton, #getListButton {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px;
+    }
+
+    #playlistTable {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
+    }
+
+    #playlistTable th, #playlistTable td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    #playlistTable th {
+        background-color: #f2f2f2;
+    }
+
+    #playlistTable tbody tr:hover {
+        cursor: pointer;
+        background-color: #f0f0f0; /* Change to your preferred hover background color */
+        transition: background-color 0.3s ease;
+    }
+
+    #playlistTable tbody tr:hover td {
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1); /* Change to your preferred box shadow */
+    }
+
+    .playlistImage {
+        max-width: 50px;
+        max-height: 50px;
+    }
+
+    /* Modal Styles */
+    #myModal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    #modalContent {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+
+    #modalWrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    </style>
+</head>
+<body>
+
+    <h1>Spotify Integration</h1>
+
+    <button id="authButton" onclick="openSpotifyAuthPopup()">Authenticate with Spotify</button>
+    <button id="getListButton" onclick="getSpotifyPlaylist()">Get Playlist Data</button>
+
+    <table id="playlistTable">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Image</th>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody id="playlistBody">
+            <!-- Playlist data will be appended here -->
+        </tbody>
+    </table>
+
+    <!-- Modal Popup -->
+    <div id="myModal">
+        <div id="modalContent">
+            <span id="modalClose" onclick="closeModal()">&times;</span>
+            <div id="modalWrapper"></div>
+        </div>
+    </div>
+
+    <script>
+        function openSpotifyAuthPopup() {
+            var popupUrl = '/api/spotify/auth';
+
+            var popupFeatures = 'width=600,height=400,resizable=yes,scrollbars=yes';
+
+            // Open the popup window
+            window.open(popupUrl, 'SpotifyAuthPopup', popupFeatures);
+        }
+
+        function getSpotifyPlaylist() {
+            // Make an API call to get playlist data
+            fetch('/api/spotify/list')
+                .then(response => response.json())
+                .then(data => renderPlaylistTable(data.playlists.items))
+                .catch(error => console.error('Error fetching playlist data:', error));
+        }
+
+        function renderPlaylistTable(playlists) {
+            var tableBody = document.getElementById('playlistBody');
+            tableBody.innerHTML = ''; // Clear existing table data
+
+            playlists.forEach(playlist => {
+                var row = tableBody.insertRow();
+                var checkboxCell = row.insertCell(0);
+                var imageCell = row.insertCell(1);
+                var idCell = row.insertCell(2);
+                var nameCell = row.insertCell(3);
+
+                var spotifyEmbed = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/${playlist.id}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`
+
+                row.setAttribute('onclick', `openModal('${spotifyEmbed}');`);//display spotify embed in the modal window
+
+                // Checkbox column (currently does nothing)
+                checkboxCell.innerHTML = '<input type="checkbox" disabled>';
+
+                idCell.innerHTML = '<a href="' + playlist.external_urls.spotify + '" target="_blank">' + playlist.id + '</a>';
+                nameCell.textContent = playlist.name;
+
+                // Check if images are available
+                if (playlist.images && playlist.images.length > 0) {
+                    var playlistImage = document.createElement('img');
+                    playlistImage.src = playlist.images[0].url;
+                    playlistImage.alt = playlist.name + ' Image';
+                    playlistImage.classList.add('playlistImage');
+                    imageCell.appendChild(playlistImage);
+                } else {
+                    imageCell.textContent = 'No Image';
+                }
+            });
+        }
+
+        // Modal functions
+        function openModal(content) {
+            document.getElementById('modalWrapper').innerHTML= content;
+            document.getElementById('myModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('myModal').style.display = 'none';
+        }
+
+        // Close modal if the user clicks outside of it
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('myModal')) {
+                closeModal();
+            }
+        }
+    </script>
+
+</body>
+</html>
