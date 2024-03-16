@@ -1,7 +1,7 @@
 const express = require('express')
 const session = require('express-session');
 const sqlite = require("better-sqlite3");
-const {google} = require('googleapis');
+const { google } = require('googleapis');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
@@ -147,7 +147,7 @@ app.get("/api/spotify/auth", async (req, res) => {
   const verifier = generateCodeVerifier(128);
   const challenge = await generateCodeChallenge(verifier);
 
-  req.session.user = {verifier: verifier}
+  req.session.user = { verifier: verifier }
 
   const params = new URLSearchParams();
 
@@ -167,7 +167,7 @@ app.get("/api/spotify/callback", async (req, res) => {
 
   const accessToken = await getToken(verifier, code);
 
-  req.session.user = {access_token: accessToken};
+  req.session.user = { access_token: accessToken };
 
   const status = {
     "status": "success",
@@ -204,8 +204,8 @@ app.get("/api/ytmusic/auth", async (req, res) => {
     scope: SCOPES
   });
 
-    res.redirect(authUrl);
-  });
+  res.redirect(authUrl);
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
