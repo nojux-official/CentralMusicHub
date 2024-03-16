@@ -105,6 +105,26 @@ async function fetchPlaylists(user_id, token) {
   }
 }
 
+async function yt_request_all_playlists(auth) {
+  const service = google.youtube('v3');
+
+  return new Promise((resolve, reject) => {
+    service.playlists.list({
+      auth: auth,
+      part: 'snippet,contentDetails',
+      mine: true
+    }, (err, response) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        reject(err);
+        return;
+      }
+
+      const playlists = response.data.items;
+      resolve(playlists);
+    });
+  });
+}
 
 
 
@@ -220,6 +240,22 @@ app.get("/api/ytmusic/callback", async (req, res) => {
   const status = {
     "status": "success",
     "access_token": tokens.access_token,
+  };
+
+  res.send(status);
+});
+
+app.get("/api/ytmusic/list", async (req, res) => {
+  var accessToken = req.session.user.yt_access_token;
+  var OAuth2 = google.auth.OAuth2;
+  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+  oauth2Client.credentials = accessToken;
+
+  var playlists = await yt_request_all_playlists(oauth2Client);
+
+  const status = {
+    "status": "success",
+    "playlists": playlists
   };
 
   res.send(status);
