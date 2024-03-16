@@ -207,6 +207,25 @@ app.get("/api/ytmusic/auth", async (req, res) => {
   res.redirect(authUrl);
 });
 
+app.get("/api/ytmusic/callback", async (req, res) => {
+  var OAuth2 = google.auth.OAuth2;
+  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+
+  var code = req.query.code;
+
+  const { tokens } = await oauth2Client.getToken(code);
+
+  req.session.user = { yt_access_token: tokens };
+
+  const status = {
+    "status": "success",
+    "access_token": tokens.access_token,
+  };
+
+  res.send(status);
+});
+
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
