@@ -1,6 +1,7 @@
 const express = require('express')
 const session = require('express-session');
 const sqlite = require("better-sqlite3");
+const {google} = require('googleapis');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
@@ -14,6 +15,8 @@ const server_address = process.env.server_address
 const client_id = process.env.spotify_client_id
 const client_secret = process.env.spotify_client_secret
 const session_secret = process.env.session_secret
+const yt_client_id = process.env.yt_client_id
+const yt_client_secret = process.env.yt_client_secret
 
 function generateCodeVerifier(length) {
   let text = '';
@@ -115,13 +118,13 @@ app.use(
     resave: false,
 
     store: new SqliteStore({
-      client: db, 
+      client: db,
       expired: {
         clear: true,
         intervalMs: 900000 //ms = 15min
       }
     }),
-    
+
   })
 );
 app.use(express.urlencoded({ extended: true }));
@@ -190,6 +193,19 @@ app.get("/api/spotify/list", async (req, res) => {
   res.send(status);
 });
 
+app.get("/api/ytmusic/auth", async (req, res) => {
+  var OAuth2 = google.auth.OAuth2;
+  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+
+  var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly'];
+
+  var authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: SCOPES
+  });
+
+    res.redirect(authUrl);
+  });
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
