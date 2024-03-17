@@ -126,6 +126,17 @@ async function yt_request_all_playlists(auth) {
   });
 }
 
+function isTokenValid(expiryDate) {
+  const currentTime = new Date().getTime(); //in milliseconds
+
+  return expiryDate > currentTime;
+}
+
+// Example usage
+const expiryDate = 1710598240771; // Replace this with your expiry date
+const isValid = isTokenValid(expiryDate);
+console.log('Is token valid?', isValid);
+
 
 
 const SqliteStore = require("better-sqlite3-session-store")(session)
@@ -261,6 +272,16 @@ app.get("/api/ytmusic/list", async (req, res) => {
   res.send(status);
 });
 
+app.get("/api/ytmusic/status", async (req, res) => {
+  const expiry_date = req.session.user?.yt_access_token?.expiry_date;
+
+  const status = {
+    "authetificated": isTokenValid(expiry_date),
+    "expiry_date": expiry_date
+  };
+
+  res.send(status);
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
