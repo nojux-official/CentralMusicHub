@@ -1,6 +1,7 @@
 const express = require('express')
 const session = require('express-session');
 const sqlite = require("better-sqlite3");
+const { google } = require('googleapis');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
@@ -14,6 +15,8 @@ const server_address = process.env.server_address
 const client_id = process.env.spotify_client_id
 const client_secret = process.env.spotify_client_secret
 const session_secret = process.env.session_secret
+const yt_client_id = process.env.yt_client_id
+const yt_client_secret = process.env.yt_client_secret
 
 function generateCodeVerifier(length) {
   let text = '';
@@ -102,6 +105,26 @@ async function fetchPlaylists(user_id, token) {
   }
 }
 
+async function yt_request_all_playlists(auth) {
+  const service = google.youtube('v3');
+
+  return new Promise((resolve, reject) => {
+    service.playlists.list({
+      auth: auth,
+      part: 'snippet,contentDetails',
+      mine: true
+    }, (err, response) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        reject(err);
+        return;
+      }
+
+      const playlists = response.data.items;
+      resolve(playlists);
+    });
+  });
+}
 
 
 
@@ -115,13 +138,13 @@ app.use(
     resave: false,
 
     store: new SqliteStore({
-      client: db, 
+      client: db,
       expired: {
         clear: true,
         intervalMs: 900000 //ms = 15min
       }
     }),
-    
+
   })
 );
 app.use(express.urlencoded({ extended: true }));
@@ -144,7 +167,7 @@ app.get("/api/spotify/auth", async (req, res) => {
   const verifier = generateCodeVerifier(128);
   const challenge = await generateCodeChallenge(verifier);
 
-  req.session.user = {verifier: verifier}
+  req.session.user = { verifier: verifier }
 
   const params = new URLSearchParams();
 
@@ -164,7 +187,7 @@ app.get("/api/spotify/callback", async (req, res) => {
 
   const accessToken = await getToken(verifier, code);
 
-  req.session.user = {access_token: accessToken};
+  req.session.user = { access_token: accessToken };
 
   const status = {
     "status": "success",
@@ -181,6 +204,54 @@ app.get("/api/spotify/list", async (req, res) => {
   var user_id = profile.id;
 
   var playlists = await fetchPlaylists(user_id, accessToken);
+
+  const status = {
+    "status": "success",
+    "playlists": playlists
+  };
+
+  res.send(status);
+});
+
+app.get("/api/ytmusic/auth", async (req, res) => {
+  var OAuth2 = google.auth.OAuth2;
+  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+
+  var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly'];
+
+  var authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: SCOPES
+  });
+
+  res.redirect(authUrl);
+});
+
+app.get("/api/ytmusic/callback", async (req, res) => {
+  var OAuth2 = google.auth.OAuth2;
+  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+
+  var code = req.query.code;
+
+  const { tokens } = await oauth2Client.getToken(code);
+
+  req.session.user = { yt_access_token: tokens };
+
+  const status = {
+    "status": "success",
+    "access_token": tokens.access_token,
+  };
+
+  res.send(status);
+});
+
+app.get("/api/ytmusic/list", async (req, res) => {
+  var accessToken = req.session.user.yt_access_token;
+  var OAuth2 = google.auth.OAuth2;
+  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+  oauth2Client.credentials = accessToken;
+
+  var playlists = await yt_request_all_playlists(oauth2Client);
 
   const status = {
     "status": "success",
