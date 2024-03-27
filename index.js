@@ -132,12 +132,6 @@ function isTokenValid(expiryDate) {
   return expiryDate > currentTime;
 }
 
-// Example usage
-const expiryDate = 1710598240771; // Replace this with your expiry date
-const isValid = isTokenValid(expiryDate);
-console.log('Is token valid?', isValid);
-
-
 
 const SqliteStore = require("better-sqlite3-session-store")(session)
 const db = new sqlite("sessions.db", { verbose: console.log });
