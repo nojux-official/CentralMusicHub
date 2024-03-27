@@ -27,7 +27,7 @@ router.get("/auth", async (req, res) => {
   
     const { tokens } = await oauth2Client.getToken(code);
   
-    req.session.user = { yt_access_token: tokens };
+    req.session.user.yt_access_token = tokens;
   
     const status = {
       "status": "success",

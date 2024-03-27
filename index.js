@@ -32,6 +32,16 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/static/', express.static(path.join(__dirname, 'static')));
 
+// Add the middleware function inline to be executed for every request
+// This ensures that req.session.user is always available
+app.use((req, res, next) => {
+  if (!req.session.user) {
+    req.session.user = {};
+  }
+  next();
+});
+
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })

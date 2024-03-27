@@ -8,7 +8,7 @@ router.get("/auth", async (req, res) => {
     const verifier = generateCodeVerifier(128);
     const challenge = await generateCodeChallenge(verifier);
   
-    req.session.user = { verifier: verifier }
+    req.session.user.spotify_verifier = verifier;
   
     const params = new URLSearchParams();
   
@@ -24,11 +24,11 @@ router.get("/auth", async (req, res) => {
   
   router.get("/callback", async (req, res) => {
     var code = req.query.code;
-    var verifier = req.session.user.verifier;
+    var verifier = req.session.user.spotify_verifier;
   
     const accessToken = await getToken(verifier, code);
   
-    req.session.user = { access_token: accessToken };
+    req.session.user.spotify_access_token = accessToken;
   
     const status = {
       "status": "success",
@@ -39,7 +39,7 @@ router.get("/auth", async (req, res) => {
   });
   
   router.get("/list", async (req, res) => {
-    var accessToken = req.session.user.access_token;
+    var accessToken = req.session.user.spotify_access_token;
   
     var profile = await fetchProfile(accessToken);
     var user_id = profile.id;
