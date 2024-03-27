@@ -5,18 +5,8 @@ const { google } = require('googleapis');
 const crypto = require('crypto');
 const axios = require('axios');
 const path = require('path');
-
-require('dotenv').config()
-
-const app = express()
-const port = 80
-
-const server_address = process.env.server_address
-const spotify_client_id = process.env.spotify_client_id
-const spotify_client_secret = process.env.spotify_client_secret
-const session_secret = process.env.session_secret
-const yt_client_id = process.env.yt_client_id
-const yt_client_secret = process.env.yt_client_secret
+const config = require('./config');
+const { youtube } = require('googleapis/build/src/apis/youtube');
 
 function generateCodeVerifier(length) {
   let text = '';
@@ -42,10 +32,10 @@ async function generateCodeChallenge(codeVerifier) {
 
 const getToken = async (codeVerifier, code) => {
   const payload = new URLSearchParams({
-    client_id: spotify_client_id,
+    client_id: config.spotify.client_id,
     grant_type: 'authorization_code',
     code,
-    redirect_uri: `${server_address}/api/spotify/callback`,
+    redirect_uri: `${config.server_address}/api/spotify/callback`,
     code_verifier: codeVerifier,
   });
 
@@ -132,13 +122,14 @@ function isTokenValid(expiryDate) {
   return expiryDate > currentTime;
 }
 
+const app = express();
 
 const SqliteStore = require("better-sqlite3-session-store")(session)
 const db = new sqlite("sessions.db", { verbose: console.log });
 
 app.use(
   session({
-    secret: session_secret,
+    secret: config.session_secret,
     saveUninitialized: false,
     resave: false,
 
@@ -177,11 +168,11 @@ app.get("/api/spotify/auth", async (req, res) => {
   const params = new URLSearchParams();
 
   params.append("response_type", "code");
-  params.append("client_id", spotify_client_id);
+  params.append("client_id", config.spotify.client_id);
   params.append("scope", "user-read-private user-read-email");
   params.append("code_challenge", challenge);
   params.append("code_challenge_method", "S256");
-  params.append("redirect_uri", `${server_address}/api/spotify/callback`);
+  params.append("redirect_uri", `${config.server_address}/api/spotify/callback`);
 
   res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
 });
@@ -220,7 +211,7 @@ app.get("/api/spotify/list", async (req, res) => {
 
 app.get("/api/ytmusic/auth", async (req, res) => {
   var OAuth2 = google.auth.OAuth2;
-  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+  var oauth2Client = new OAuth2(config.youtube.client_id, config.youtube.client_secret, `${config.server_address}/api/ytmusic/callback`);
 
   var SCOPES = ['https://www.googleapis.com/auth/youtube.readonly'];
 
@@ -234,7 +225,7 @@ app.get("/api/ytmusic/auth", async (req, res) => {
 
 app.get("/api/ytmusic/callback", async (req, res) => {
   var OAuth2 = google.auth.OAuth2;
-  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+  var oauth2Client = new OAuth2(config.youtube.client_id, config.youtube.client_secret, `${config.server_address}/api/ytmusic/callback`);
 
   var code = req.query.code;
 
@@ -253,7 +244,7 @@ app.get("/api/ytmusic/callback", async (req, res) => {
 app.get("/api/ytmusic/list", async (req, res) => {
   var accessToken = req.session.user.yt_access_token;
   var OAuth2 = google.auth.OAuth2;
-  var oauth2Client = new OAuth2(yt_client_id, yt_client_secret, `${server_address}/api/ytmusic/callback`);
+  var oauth2Client = new OAuth2(config.youtube.client_id, config.youtube.client_secret, `${config.server_address}/api/ytmusic/callback`);
   oauth2Client.credentials = accessToken;
 
   var playlists = await yt_request_all_playlists(oauth2Client);
@@ -277,6 +268,6 @@ app.get("/api/ytmusic/status", async (req, res) => {
   res.send(status);
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+app.listen(config.port, () => {
+  console.log(`Example app listening on port ${config.port}`)
 })
