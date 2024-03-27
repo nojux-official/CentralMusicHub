@@ -6,33 +6,7 @@ const path = require('path');
 const config = require('./config');
 const { youtube } = require('googleapis/build/src/apis/youtube');
 const { generateCodeVerifier, generateCodeChallenge, getToken, fetchProfile, fetchPlaylists } = require('./lib/spotify_api');
-
-async function yt_request_all_playlists(auth) {
-  const service = google.youtube('v3');
-
-  return new Promise((resolve, reject) => {
-    service.playlists.list({
-      auth: auth,
-      part: 'snippet,contentDetails',
-      mine: true
-    }, (err, response) => {
-      if (err) {
-        console.log('The API returned an error: ' + err);
-        reject(err);
-        return;
-      }
-
-      const playlists = response.data.items;
-      resolve(playlists);
-    });
-  });
-}
-
-function isTokenValid(expiryDate) {
-  const currentTime = new Date().getTime(); //in milliseconds
-
-  return expiryDate > currentTime;
-}
+const { yt_request_all_playlists, isTokenValid } = require('./lib/yt_api');
 
 const app = express();
 
