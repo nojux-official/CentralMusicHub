@@ -12,8 +12,8 @@ const app = express()
 const port = 80
 
 const server_address = process.env.server_address
-const client_id = process.env.spotify_client_id
-const client_secret = process.env.spotify_client_secret
+const spotify_client_id = process.env.spotify_client_id
+const spotify_client_secret = process.env.spotify_client_secret
 const session_secret = process.env.session_secret
 const yt_client_id = process.env.yt_client_id
 const yt_client_secret = process.env.yt_client_secret
@@ -42,7 +42,7 @@ async function generateCodeChallenge(codeVerifier) {
 
 const getToken = async (codeVerifier, code) => {
   const payload = new URLSearchParams({
-    client_id: client_id,
+    client_id: spotify_client_id,
     grant_type: 'authorization_code',
     code,
     redirect_uri: `${server_address}/api/spotify/callback`,
@@ -183,7 +183,7 @@ app.get("/api/spotify/auth", async (req, res) => {
   const params = new URLSearchParams();
 
   params.append("response_type", "code");
-  params.append("client_id", client_id);
+  params.append("client_id", spotify_client_id);
   params.append("scope", "user-read-private user-read-email");
   params.append("code_challenge", challenge);
   params.append("code_challenge_method", "S256");
